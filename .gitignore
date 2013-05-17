@@ -1,0 +1,10 @@
+*#seedGerm.*
+seedGerm.*
+!seedGerm.org*
+*.o
+*.so
+*.rds
+.#*
+#*
+*#
+*~

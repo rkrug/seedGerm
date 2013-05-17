@@ -1,0 +1,635 @@
+#+TITLE:     seedGerm.org
+#+AUTHOR:    Charles C. Berry    
+#+EMAIL:     cberry@tajo.ucsd.edu
+#+DATE:      2010-12-08 Thur
+#+DESCRIPTION: R Package Development Helpers
+#+KEYWORDS: 
+
+:CONFIG:
+#+LANGUAGE:  en
+#+OPTIONS:   H:3 num:t toc:t \n:nil @:t ::t |:t ^:t -:t f:t *:t <:t
+#+OPTIONS:   TeX:t LaTeX:nil skip:nil d:nil todo:t pri:nil tags:not-in-toc
+#+INFOJS_OPT: view:nil toc:nil ltoc:t mouse:underline buttons:0 path:http://orgmode.org/org-info.js
+#+EXPORT_SELECT_TAGS: export
+#+EXPORT_EXCLUDE_TAGS: noexport
+#+LINK_UP:   
+#+LINK_HOME: 
+
+#+TODO: TODO OPTIMIZE TOGET COMPLETE WAIT VERIFY CHECK CODE DOCUMENTATION | DONE RECEIVED CANCELD 
+
+#+STARTUP: indent hidestars nohideblocks
+#+DRAWERS: HIDDEN PROPERTIES STATE CONFIG BABEL OUTPUT LATEXHEADER HTMLHEADER
+#+STARTUP: nohidestars hideblocks
+:END:
+:HTMLHEADER:
+#+begin_html
+  <div id="subtitle" style="float: center; text-align: center;">
+  <p>
+Org-babel support for building 
+  <a href="http://www.r-project.org/">R</a> packages
+  </p>
+  <p>
+  <a href="http://www.r-project.org/">
+  <img src="http://www.r-project.org/Rlogo.jpg"/>
+  </a>
+  </p>
+  </div>
+#+end_html
+:END:
+:LATEXHEADER:
+#+LATEX_HEADER: \usepackage{rotfloat}
+#+LATEX_HEADER: \definecolor{light-gray}{gray}{0.9}
+#+LATEX_HEADER: \lstset{%
+#+LATEX_HEADER:     basicstyle=\ttfamily\footnotesize,       % the font that is used for the code
+#+LATEX_HEADER:     tabsize=4,                       % sets default tabsize to 4 spaces
+#+LATEX_HEADER:     numbers=left,                    % where to put the line numbers
+#+LATEX_HEADER:     numberstyle=\tiny,               % line number font size
+#+LATEX_HEADER:     stepnumber=0,                    % step between two line numbers
+#+LATEX_HEADER:     breaklines=true,                 %!! don't break long lines of code
+#+LATEX_HEADER:     showtabs=false,                  % show tabs within strings adding particular underscores
+#+LATEX_HEADER:     showspaces=false,                % show spaces adding particular underscores
+#+LATEX_HEADER:     showstringspaces=false,          % underline spaces within strings
+#+LATEX_HEADER:     keywordstyle=\color{blue},
+#+LATEX_HEADER:     identifierstyle=\color{black},
+#+LATEX_HEADER:     stringstyle=\color{green},
+#+LATEX_HEADER:     commentstyle=\color{red},
+#+LATEX_HEADER:     backgroundcolor=\color{light-gray},   % sets the background color
+#+LATEX_HEADER:     columns=fullflexible,  
+#+LATEX_HEADER:     basewidth={0.5em,0.4em}, 
+#+LATEX_HEADER:     captionpos=b,                    % sets the caption position to `bottom'
+#+LATEX_HEADER:     extendedchars=false              %!?? workaround for when the listed file is in UTF-8
+#+LATEX_HEADER: }
+:END:
+:BABEL:
+#+PROPERTY: exports code
+#+PROPERTY: comments yes
+#+PROPERTY: padline no
+#+PROPERTY: var MAJORVERSION=0
+#+PROPERTY: var+ MINORVERSION=0
+#+PROPERTY: var+ PATCHVERSION=1
+#+PROPERTY: var+ GITHASH="testhash" 
+#+PROPERTY: var+ GITCOMMITDATE="testdate"
+:END:
+
+* Internal configurations                      :noexport:
+** Evaluate to run post tangle script
+#+begin_src emacs-lisp :results silent :tangle no :exports none
+  (add-hook 'org-babel-post-tangle-hook
+            (
+             lambda () 
+                    (call-process-shell-command "./postTangleScript.sh" nil 0 nil)
+  ;;              (async-shell-command "./postTangleScript.sh")
+  ;;              (ess-load-file (save-window-excursion (replace-regexp-in-string ".org" ".R" buffer-file-name)))))
+  ;;              (ess-load-file "nsa.R")))
+  ;;              (ess-load-file "spreadSim.R")
+                    )
+            )
+#+end_src
+
+** Post tangle script
+#+begin_src sh :results output :tangle ./postTangleScript.sh :var VER=(vc-working-revision (buffer-file-name)) :var STATE=(vc-state (or (buffer-file-name) org-current-export-file))
+  sed -i s/MAJORVERSION/$MAJORVERSION/ ./DESCRIPTION
+  sed -i s/MINORVERSION/$MINORVERSION/ ./DESCRIPTION
+  sed -i s/PATCHVERSION/$PATCHVERSION/ ./DESCRIPTION
+  sed -i s/TODAYSDATE/`date +%Y-%m-%d_%H-%M`/ ./DESCRIPTION
+
+  sed -i s/MAJORVERSION/$MAJORVERSION/ ./seedGerm-package.R
+  sed -i s/MINORVERSION/$MINORVERSION/ ./seedGerm-package.R
+  sed -i s/PATCHVERSION/$PATCHVERSION/ ./seedGerm-package.R
+  sed -i s/TODAYSDATE/`date +%Y-%m-%d_%H-%M`/ ./seedGerm-package.R
+
+  Rscript -e "library(roxygen2);roxygenize('pkg', roxygen.dir='pkg', copy.package=FALSE, unlink.target=FALSE)"
+  rm -f ./postTangleScript.sh
+#+end_src
+
+
+* gitignore file (./.gitignore)
+:PROPERTIES:
+:tangle: ./.gitignore
+:comments: no
+:no-expand: TRUE
+:shebang:
+:padline: no
+:END: 
+#+begin_src gitignore
+  *#seedGerm.*
+  seedGerm.*
+  !seedGerm.org*
+  *.o
+  *.so
+  *.rds
+  .#*
+  #*
+  *#
+  *~
+#+end_src
+
+* Git Revision info
+Complete version info
+#+begin_src sh :exports results :results output replace 
+  echo "Version     : " $MAJORVERSION.$MINORVERSION-$PATCHVERSION
+  echo "Commit date : " `git show -s --format="%ci" HEAD`
+  echo "git HASH    : " `git rev-parse HEAD`
+  echo "git status  : "
+  git status
+#+end_src
+
+#+RESULTS:
+: Version     :  .4-13
+: Commit date :  2013-03-20 18:33:21 +0100
+: git HASH    :  906d085c35b4b835082e4583c4134c5ddf7f1555
+: git status  : 
+: # On branch master
+: nothing to commit, working directory clean
+
+
+
+* Rbuildignore file (./.Rbuildignore)
+:PROPERTIES:
+:tangle: ./.Rbuildignore
+:comments: no
+:no-expand: TRUE
+:shebang:
+:padline: no
+:END: 
+#+begin_src fundamental
+  .git
+  ^.*\\.org$
+  ^seedGerm.
+  .gitignore
+  library
+  version
+  postTangleScript.sh
+#+end_src
+
+
+
+* Package description
+#+begin_src R :eval nil :tangle ./seedGerm-package.R :shebang :padline no :no-expand :comments no
+  ##' Routines for spatial seedGerm for alien clearing
+  ##' 
+  ##' \tabular{ll}{
+  ##' Package: \tab seedGerm\cr
+  ##' Type: \tab Package\cr
+  ##' Version: \tab MAJORVERSION.MINORVERSION.PATCHVERSION\cr
+  ##' Date: \tab TODAYSDATE\cr
+  ##' License: \tab GPL (>= 2)\cr
+  ##' LazyLoad: \tab yes\cr
+  ##' }
+  ##'
+  ##' @docType package
+  ##' @author Rainer M Krug \email{Rainer@@krugs.de}
+  NULL
+#+end_src
+
+* Package Files
+** DESCRIPTION
+:PROPERTIES:
+:tangle:   ./DESCRIPTION
+:padline: no 
+:no-expand: TRUE
+:comments: no
+:END:
+#+begin_src fundamental
+  Package: seedGerm
+  Type: Package
+  Title: Spatial seed germination routines
+  Version: MAJORVERSION.MINORVERSION-PATCHVERSION
+  Date: TODAYSDATE
+  Author: Rainer M. Krug
+  Maintainer: Rainer M Krug <Rainer@krugs.de>
+  Description: Routines for spatial seed germination
+  License: GPL-3
+  LazyLoad: yes
+#+end_src
+
+** NAMESPACE
+:PROPERTIES:
+:tangle:   ./NAMESPACE
+:padline: no 
+:no-expand: TRUE
+:comments: no
+:END:
+#+begin_src R
+  # useDynLib(seedGerm)
+  exportPattern("^[[:alpha:]]+")
+#+end_src
+
+#+results:
+
+
+* R directory (./R)
+** TODO seedProdBasic
+Needs to be tested!!!
+:PROPERTIES:
+:tangle:   ./R/seedGermBasic.R
+:comments: yes
+:no-expand: TRUE
+:END:
+#+begin_src R 
+  ##' Basic and deterministic germination based on seed bank
+  ##'
+  ##' Calculates number of seedlings and their density class based on probability that
+  ##' seeds in seed bank germinate and a function 
+  ##' @title 
+  ##' @param seedsSoilLayer name of layer contraining number of seeds in soil seed bank
+  ##' @param disturbancesLayer name of disturbance layer for species
+  ##' @param suitabilityLayer name of suitability layer for species
+  ##' @param pGermination proportion of seeds which will try to germinate, i.e. either germinate or are removed from soil seed bank in the process
+  ##' @param pGerminationDep function to determine actual probability of germination in dependanc of suitability and disturbance in cell
+  ##' @param seedlToDcCuts cuts for conversion of number of germinated seedlings to density classes (parameter$res$cellSize * species$WfWdc$seedling / 10000)
+  ##' @param dcClasses name of density classes (pecies$WfWdc$dc[length(species$WfWdc$dc):1])
+  ##' @param pGermLayer output: name of layer containing actual probabilities of germination per cell
+  ##' @param noSeedlingsLayer output: name of number of seedlings layer
+  ##' @param dcSeedlingsLayer output: name of seedlings density class (dc)
+  ##' @return 
+  ##' @author Dr Rainer M Krug
+  germBasic <- function(
+    ## parameter, species) {
+    seedsSoilLayer,                       # layerName(species, type="seedsSoil", year=parameter$year)
+    disturbancesLayer,                    # layerName(species, type="disturbances", year=parameter$year)
+    suitabilityLayer,                     # suitName(species)
+    pGermination,                         # species$pGermination
+    pGerminationDep,                      # species$pGerminationDep
+  
+    seedlToDcCuts,                        # parameter$res$cellSize * species$WfWdc$seedling / 10000
+    dcClasses,                            # species$WfWdc$dc[length(species$WfWdc$dc):1]
+  
+    pGermLayer,                           # layerName(species, type="pGerm", parameter$year)
+    noSeedlingsLayer,                     # layerName(species, type="noSeedlings", parameter$year)
+    dcSeedlingsLayer                      # layerName(species, type="dcSeedlings", parameter$year) 
+    ) {
+    noS <- noSeedlingsLayer
+    pGerm <- pGermLayer 
+    
+    germ <- readRAST6(
+      c(
+        sS <- seedsSoilLayer,
+        dist <- disturbanceLayer,
+        suit <- suitabilityLayer
+        ),
+      NODATA=-1
+      )
+    
+    ## calculate number of seeds which will germinate
+    seedsGerm <- germ[[sS]] * pGermination
+    
+    ## adjust soil seed bank
+    germ[[sS]] <- germ[[sS]] - seedsGerm
+    
+    ## successfull germination probability is pGerminationDep for the species
+    germ[[4]] <- pGerminationDep(germ[[suit]], germ[[dist]])
+    mode(germ[[4]]) <- "double"
+    ## germ@proj4string <- parameter$proj4string
+    writeRAST6(
+      germ,
+      vname = pGermLayer,
+      zcol = 4,
+      NODATA = -1
+      )
+    
+    ## ## seeds <- readRAST6( "tempGerm", NODATA=-1, ignore.stderr=!options("asmDebug")[[1]] )
+    ## seeds <- tmpGerm ##sgdfToMatrix(seeds, 1)
+    
+    ## initialise seedl with -999
+    seedl <- rep(-999, length(seedsGerm))
+    
+    ## set seedl to NA for all cells which have pGerm <= 0 or seeds <= 0
+    seedl[pGerm <= 0] <- NA
+    seedl[seedsGerm <= 0] <- NA
+  
+    ## set germ to NA for all cells which have is.na(pGerm) or is.na(seedsGerm)
+    seedl[is.na(seedsGerm)] <- NA
+    seedl[is.na(pGerm)] <- NA
+    
+    ## set seedl to seedsGerm for all cells which have pGerm == 1
+    rb <- (pGerm == 1)
+    rb[is.na(rb)] <- FALSE
+    seedl[rb] <- seedsGerm[rb]  
+    
+    ## identify all remaining cells (i.e. seedl == -999) cells with suitabilities 0 < suit < 1 and calculate recruits in these cells
+    rb <- (seedl == -999)
+    rb[is.na(rb)] <- FALSE
+    oldWarn <- options()$warn
+    options(warn=-1)
+    seedl[rb] <- rbinom(
+      sum(rb),
+      size=seeds[rb],
+      prob=pGerm[rb]
+      )
+    options(warn=oldWarn)
+    
+    seedl[seedl == 0] <- NA
+    germ[[5]] <- seedl  
+    mode(germ[[5]]) <- "double"
+    ## germ@proj4string <- parameter$proj4string
+    writeRAST6(
+      germ,
+      vname = noS,
+      zcol = 5,
+      NODATA = -1
+      )
+    
+    ## Reclassification of noSeedlings into dcSeedlings
+    dcSeedl <- as.numeric(
+      as.character(
+        cut(
+          x = seedl,
+          breaks = c(Inf, seedlToDcCuts),
+          labels = dcClasses,
+          include.lowest = TRUE
+          )
+        )
+      )
+    dcSeedl[dcSeedl == 0] <- NA
+    germ[[5]] <- dcSeedl  
+    mode(germ[[5]]) <- "double"
+    ## germ@proj4string <- parameter$proj4string
+    writeRAST6(
+      germ,
+      vname = dcSeedlingsLayer,
+      zcol = 5,
+      NODATA = -1
+      )
+  }
+#+end_src
+** TODO seedGermBasic
+Needs to be tested!!!
+:PROPERTIES:
+:tangle:   ./R/seedGermBasic.R
+:comments: yes
+:no-expand: TRUE
+:END:
+#+begin_src R
+
+#+end_src
+
+* TODO Tests
+Write test functions
+* TODO Vignette
+Write vignette
+* package management                                               :noexport:
+** check package
+#+begin_src sh :results output
+  CWD=`pwd`
+  R CMD check pkg | sed 's/^*/ */'
+#+end_src
+
+#+results:
+#+begin_example
+ * using log directory ‘/home/rkrug/Documents/Projects/R-Packages/seeddisp/pkg.Rcheck’
+ * using R version 2.13.2 (2011-09-30)
+ * using platform: i686-pc-linux-gnu (32-bit)
+ * using session charset: UTF-8
+ * checking for file ‘DESCRIPTION’ ... OK
+ * checking extension type ... Package
+ * this is package ‘seedGerm’ version ‘0.0-13’
+ * checking package namespace information ... OK
+ * checking package dependencies ... OK
+ * checking if this is a source package ... WARNING
+Subdirectory ‘seedGerm/src’ contains object files.
+ * checking for executable files ... OK
+ * checking whether package ‘seedGerm’ can be installed ... OK
+ * checking installed package size ... OK
+ * checking package directory ... OK
+ * checking for portable file names ... OK
+ * checking for sufficient/correct file permissions ... OK
+ * checking DESCRIPTION meta-information ... OK
+ * checking top-level files ... OK
+ * checking index information ... OK
+ * checking package subdirectories ... WARNING
+Subdirectory 'inst' contains no files.
+ * checking R files for non-ASCII characters ... OK
+ * checking R files for syntax errors ... OK
+ * checking whether the package can be loaded ... OK
+ * checking whether the package can be loaded with stated dependencies ... OK
+ * checking whether the package can be unloaded cleanly ... OK
+ * checking whether the namespace can be loaded with stated dependencies ... OK
+ * checking whether the namespace can be unloaded cleanly ... OK
+ * checking for unstated dependencies in R code ... OK
+ * checking S3 generic/method consistency ... OK
+ * checking replacement functions ... OK
+ * checking foreign function calls ... OK
+ * checking R code for possible problems ... OK
+ * checking Rd files ... OK
+ * checking Rd metadata ... OK
+ * checking Rd cross-references ... OK
+ * checking for missing documentation entries ... WARNING
+Undocumented code objects:
+  waterDisp
+All user-level objects in a package should have documentation entries.
+See the chapter 'Writing R documentation files' in the 'Writing R
+Extensions' manual.
+ * checking for code/documentation mismatches ... WARNING
+Codoc mismatches from documentation object 'birdDispGRASS':
+birdDispGRASS
+  Code: function(input, output = "birdDispSeeds", zeroToNULL = TRUE,
+                 overwrite = FALSE)
+  Docs: function(input, output, overwrite)
+  Argument names in code not in docs:
+    zeroToNULL
+  Mismatches in argument names:
+    Position: 3 Code: zeroToNULL Docs: overwrite
+  Mismatches in argument default values:
+    Name: 'output' Code: "birdDispSeeds" Docs: 
+    Name: 'overwrite' Code: FALSE Docs: 
+
+Codoc mismatches from documentation object 'localDispGRASS':
+localDispGRASS
+  Code: function(input, output = "localDispSeeds", zeroToNULL = TRUE,
+                 overwrite = FALSE)
+  Docs: function(input, output, overwrite)
+  Argument names in code not in docs:
+    zeroToNULL
+  Mismatches in argument names:
+    Position: 3 Code: zeroToNULL Docs: overwrite
+  Mismatches in argument default values:
+    Name: 'output' Code: "localDispSeeds" Docs: 
+    Name: 'overwrite' Code: FALSE Docs: 
+
+Codoc mismatches from documentation object 'waterDispGRASS':
+waterDispGRASS
+  Code: function(input, output = "waterDispSeeds", slope = "slope",
+                 flowdir = "flowdir", depRates, overwrite = FALSE,
+                 zeroToNULL = TRUE, progress = TRUE)
+  Docs: function(input, output = "waterDispSeeds", slope = "SLOPE",
+                 flowdir = "FLOWDIR", overwrite = FALSE)
+  Argument names in code not in docs:
+    depRates zeroToNULL progress
+  Mismatches in argument names:
+    Position: 5 Code: depRates Docs: overwrite
+  Mismatches in argument default values:
+    Name: 'slope' Code: "slope" Docs: "SLOPE"
+    Name: 'flowdir' Code: "flowdir" Docs: "FLOWDIR"
+
+Codoc mismatches from documentation object 'windDisp':
+windDisp
+  Code: function(SD2D, SEEDS, MASK, zeroToNULL)
+  Docs: function(SD2D, SEEDS, MASK)
+  Argument names in code not in docs:
+    zeroToNULL
+
+Codoc mismatches from documentation object 'windDispGRASS':
+windDisp
+  Code: function(SD2D, SEEDS, MASK, zeroToNULL)
+  Docs: function(SD2D, input, output = "windDispSeeds", overwrite =
+                 FALSE)
+  Argument names in code not in docs:
+    SEEDS MASK zeroToNULL
+  Argument names in docs not in code:
+    input output overwrite
+  Mismatches in argument names:
+    Position: 2 Code: SEEDS Docs: input
+    Position: 3 Code: MASK Docs: output
+    Position: 4 Code: zeroToNULL Docs: overwrite
+
+ * checking Rd \usage sections ... WARNING
+Documented arguments not in \usage in documentation object 'waterDispGRASS':
+  depRates
+
+Objects in \usage without \alias in documentation object 'windDispGRASS':
+  windDisp
+
+Functions with \usage entries need to have the appropriate \alias
+entries, and all their arguments documented.
+The \usage entries must correspond to syntactically valid R code.
+See the chapter 'Writing R documentation files' in the 'Writing R
+Extensions' manual.
+ * checking Rd contents ... OK
+ * checking for unstated dependencies in examples ... OK
+ * checking line endings in C/C++/Fortran sources/headers ... OK
+ * checking line endings in Makefiles ... OK
+ * checking for portable compilation flags in Makevars ... OK
+ * checking for portable use of $(BLAS_LIBS) and $(LAPACK_LIBS) ... OK
+ * checking examples ... NONE
+ * checking PDF version of manual ... OK
+WARNING: There were 5 warnings, see
+  ‘/home/rkrug/Documents/Projects/R-Packages/seeddisp/pkg.Rcheck/00check.log’
+for details
+#+end_example
+
+
+
+** INSTALL package
+
+#+begin_src sh :results output :var rckopts="--library=./Rlib"
+  R CMD INSTALL $rckopts pkg
+#+end_src
+
+#+results:
+: g++ -I/usr/share/R/include   -I"/home/rkrug/R/i486-pc-linux-gnu-library/2.13/Rcpp/include"   -fpic  -O3 -pipe  -g -c windDispCpp.cpp -o windDispCpp.o
+: g++ -shared -o seedGerm.so windDispCpp.o -L/home/rkrug/R/i486-pc-linux-gnu-library/2.13/Rcpp/lib -lRcpp -Wl,-rpath,/home/rkrug/R/i486-pc-linux-gnu-library/2.13/Rcpp/lib -L/usr/lib/R/lib -lR
+
+
+** build package
+
+#+begin_src sh :results output
+  R CMD build ./
+#+end_src
+
+#+results:
+
+
+
+** load library
+
+#+begin_src R :session :results output :var libname=(file-name-directory buffer-file-name)
+## customize the next line as needed: 
+.libPaths(new = file.path(getwd(),"Rlib") )
+require( basename(libname), character.only=TRUE)
+#+end_src
+
+#+results:
+
+- this loads the library into an R session
+- customize or delete the =.libPaths= line as desired 
+
+
+: #+begin_src R :session :var libname=(file-name-directory buffer-file-name)
+: .libPaths(new = file.path(getwd(),"Rlib") )
+: require( basename(libname), character.only=TRUE)
+: #+end_src
+
+** grep require( 
+
+- if you keep all your source code in this =.org= document, then you do not
+  need to do this - instead just type =C-s require(=
+- list package dependencies that might need to be dealt with
+
+#+begin_src sh :results output
+grep 'require(' R/*
+#+end_src
+
+: #+begin_src sh :results output
+: grep 'require(' R/*
+: #+end_src
+
+** set up .Rbuildignore and man, R, and Rlib directories
+
+- This document sits in the top level source directory. So, ignore it
+  and its offspring when checking, installing and building.
+- List all files to ignore under =#+results: rbi=  (including this
+  one!). Regular expressions are allowed.
+- Rlib is optional. If you want to INSTALL in the system directory,
+  you own't need it.
+
+: #+results: rbi
+#+results: rbi
+: Rpackage.*
+: PATCHVERSION
+: MAJORVERSION
+: MINORVERSION
+
+Only need to run this once (unless you add more ignorable files).
+
+#+begin_src R :results output silent :var rbld=rbi 
+dir.create("./seedGerm")
+cat(rbld,'\n', file="./.Rbuildignore")
+dir.create("./man")
+dir.create("./R")
+dir.create("./src")
+dir.create("./Rlib")
+#+end_src
+
+: #+begin_src R :results output silent :var rbld=rbi 
+: cat(rbld,'\n', file=".Rbuildignore")
+: dir.create("man")
+: dir.create("R")
+: dir.create("../Rlib")
+: #+end_src
+
+* Package structure and src languages                              :noexport:
+
+- The top level directory may contain these files (and others):
+
+| filename    | filetype      |
+|-------------+---------------|
+| INDEX       | text          |
+| NAMESPACE   | R-like script |
+| configure   | Bourne shell  |
+| cleanup     | Bourne shell  |
+| LICENSE     | text          |
+| LICENCE     | text          |
+| COPYING     | text          |
+| NEWS        | text          |
+| DESCRIPTION | [[http://www.debian.org/doc/debian-policy/ch-controlfields.html][DCF]]           |
+|-------------+---------------|
+
+
+ 
+   and subdirectories
+| direname | types of files                                   |
+|----------+--------------------------------------------------|
+| R        | R                                                |
+| data     | various                                          |
+| demo     | R                                                |
+| exec     | various                                          |
+| inst     | various                                          |
+| man      | Rd                                               |
+| po       | poEdit                                           |
+| src      | .c, .cc or .cpp, .f, .f90, .f95, .m, .mm, .M, .h |
+| tests    | R, Rout                                          |
+|----------+--------------------------------------------------|
+|          |                                                  |
+   
+ [[info:emacs#Specifying%20File%20Variables][info:emacs#Specifying File Variables]]

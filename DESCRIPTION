@@ -1,0 +1,10 @@
+Package: seedGerm
+Type: Package
+Title: Spatial seed germination routines
+Version: 0.0-1
+Date: 2013-05-16_15-09
+Author: Rainer M. Krug
+Maintainer: Rainer M Krug <Rainer@krugs.de>
+Description: Routines for spatial seed germination
+License: GPL-3
+LazyLoad: yes
