@@ -219,7 +219,7 @@ Complete version info
 
 
 * R directory (./R)
-** TODO seedProdBasic
+** TODO seedGermBasic
 Needs to be tested!!!
 :PROPERTIES:
 :tangle:   ./R/seedGermBasic.R
@@ -244,124 +244,109 @@ Needs to be tested!!!
   ##' @param dcSeedlingsLayer output: name of seedlings density class (dc)
   ##' @return 
   ##' @author Dr Rainer M Krug
-  germBasic <- function(
-    ## parameter, species) {
-    seedsSoilLayer,                       # layerName(species, type="seedsSoil", year=parameter$year)
-    disturbancesLayer,                    # layerName(species, type="disturbances", year=parameter$year)
-    suitabilityLayer,                     # suitName(species)
-    pGermination,                         # species$pGermination
-    pGerminationDep,                      # species$pGerminationDep
+  seedGermBasic <- function(
+      seedsSoilLayer,                       # layerName(species, type="seedsSoil", year=parameter$year)
+      disturbancesLayer,                    # layerName(species, type="disturbances", year=parameter$year)
+      suitabilityLayer,                     # suitName(species)
+      pGermination,                         # species$pGermination
+      pGerminationDep,                      # species$pGerminationDep
   
-    seedlToDcCuts,                        # parameter$res$cellSize * species$WfWdc$seedling / 10000
-    dcClasses,                            # species$WfWdc$dc[length(species$WfWdc$dc):1]
+      seedlToDcCuts,                        # parameter$res$cellSize * species$WfWdc$seedling / 10000
+      dcClasses,                            # species$WfWdc$dc[length(species$WfWdc$dc):1]
   
-    pGermLayer,                           # layerName(species, type="pGerm", parameter$year)
-    noSeedlingsLayer,                     # layerName(species, type="noSeedlings", parameter$year)
-    dcSeedlingsLayer                      # layerName(species, type="dcSeedlings", parameter$year) 
-    ) {
-    noS <- noSeedlingsLayer
-    pGerm <- pGermLayer 
-    
-    germ <- readRAST6(
-      c(
-        sS <- seedsSoilLayer,
-        dist <- disturbanceLayer,
-        suit <- suitabilityLayer
-        ),
-      NODATA=-1
-      )
-    
-    ## calculate number of seeds which will germinate
-    seedsGerm <- germ[[sS]] * pGermination
-    
-    ## adjust soil seed bank
-    germ[[sS]] <- germ[[sS]] - seedsGerm
-    
-    ## successfull germination probability is pGerminationDep for the species
-    germ[[4]] <- pGerminationDep(germ[[suit]], germ[[dist]])
-    mode(germ[[4]]) <- "double"
-    ## germ@proj4string <- parameter$proj4string
-    writeRAST6(
-      germ,
-      vname = pGermLayer,
-      zcol = 4,
-      NODATA = -1
-      )
-    
-    ## ## seeds <- readRAST6( "tempGerm", NODATA=-1, ignore.stderr=!options("asmDebug")[[1]] )
-    ## seeds <- tmpGerm ##sgdfToMatrix(seeds, 1)
-    
-    ## initialise seedl with -999
-    seedl <- rep(-999, length(seedsGerm))
-    
-    ## set seedl to NA for all cells which have pGerm <= 0 or seeds <= 0
-    seedl[pGerm <= 0] <- NA
-    seedl[seedsGerm <= 0] <- NA
-  
-    ## set germ to NA for all cells which have is.na(pGerm) or is.na(seedsGerm)
-    seedl[is.na(seedsGerm)] <- NA
-    seedl[is.na(pGerm)] <- NA
-    
-    ## set seedl to seedsGerm for all cells which have pGerm == 1
-    rb <- (pGerm == 1)
-    rb[is.na(rb)] <- FALSE
-    seedl[rb] <- seedsGerm[rb]  
-    
-    ## identify all remaining cells (i.e. seedl == -999) cells with suitabilities 0 < suit < 1 and calculate recruits in these cells
-    rb <- (seedl == -999)
-    rb[is.na(rb)] <- FALSE
-    oldWarn <- options()$warn
-    options(warn=-1)
-    seedl[rb] <- rbinom(
-      sum(rb),
-      size=seeds[rb],
-      prob=pGerm[rb]
-      )
-    options(warn=oldWarn)
-    
-    seedl[seedl == 0] <- NA
-    germ[[5]] <- seedl  
-    mode(germ[[5]]) <- "double"
-    ## germ@proj4string <- parameter$proj4string
-    writeRAST6(
-      germ,
-      vname = noS,
-      zcol = 5,
-      NODATA = -1
-      )
-    
-    ## Reclassification of noSeedlings into dcSeedlings
-    dcSeedl <- as.numeric(
-      as.character(
-        cut(
-          x = seedl,
-          breaks = c(Inf, seedlToDcCuts),
-          labels = dcClasses,
-          include.lowest = TRUE
+      pGermLayer,                           # layerName(species, type="pGerm", parameter$year)
+      noSeedlingsLayer,                     # layerName(species, type="noSeedlings", parameter$year)
+      dcSeedlingsLayer                      # layerName(species, type="dcSeedlings", parameter$year) 
+      ) {
+      
+      germ <- readRAST6(
+          c(
+              sS <- seedsSoilLayer,
+              dist <- disturbancesLayer,
+              suit <- suitabilityLayer
+              ),
+          NODATA=-1
           )
-        )
-      )
-    dcSeedl[dcSeedl == 0] <- NA
-    germ[[5]] <- dcSeedl  
-    mode(germ[[5]]) <- "double"
-    ## germ@proj4string <- parameter$proj4string
-    writeRAST6(
-      germ,
-      vname = dcSeedlingsLayer,
-      zcol = 5,
-      NODATA = -1
-      )
+      
+      ## calculate number of seeds which will germinate
+      seedsGerm <- germ[[sS]] * pGermination
+      
+      ## adjust soil seed bank
+      germ[[sS]] <- germ[[sS]] - seedsGerm
+      
+      ## successfull germination probability is pGerminationDep for the species
+      germ[[4]] <- pGerminationDep(germ[[suit]], germ[[dist]])
+      mode(germ[[4]]) <- "double"
+      pGerm <- germ[[4]] 
+      ## germ@proj4string <- parameter$proj4string
+      writeRAST6(
+          germ,
+          vname = pGermLayer,
+          zcol = 4,
+          NODATA = -1
+          )
+      
+      ## initialise seedl with -999
+      seedl <- rep(-999, length(seedsGerm))
+      
+      ## set seedl to NA for all cells which have pGerm <= 0 or seeds <= 0
+      seedl[pGerm <= 0] <- NA
+      seedl[seedsGerm <= 0] <- NA
+  
+      ## set seedl to NA for all cells which have is.na(pGerm) or is.na(seedsGerm)
+      seedl[is.na(seedsGerm)] <- NA
+      seedl[is.na(pGerm)] <- NA
+      
+      ## set seedl to seedsGerm for all cells which have pGerm == 1
+      rb <- (pGerm == 1)
+      rb[is.na(rb)] <- FALSE
+      seedl[rb] <- seedsGerm[rb]  
+      
+      ## identify all remaining cells (i.e. seedl == -999) cells with suitabilities 0 < suit < 1 and calculate recruits in these cells
+      rb <- (seedl == -999)
+      rb[is.na(rb)] <- FALSE
+      oldWarn <- options()$warn
+      options(warn=-1)
+      seedl[rb] <- rbinom(
+          n    = sum(rb),
+          size = seedsGerm[rb],
+          prob = pGerm[rb]
+          )
+      options(warn=oldWarn)
+      
+      seedl[seedl == 0] <- NA
+      germ[[5]] <- seedl  
+      mode(germ[[5]]) <- "double"
+      ## germ@proj4string <- parameter$proj4string
+      writeRAST6(
+          germ,
+          vname = noSeedlingsLayer,
+          zcol = 5,
+          NODATA = -1
+          )
+      
+      ## Reclassification of noSeedlings into dcSeedlings
+      dcSeedl <- as.numeric(
+          as.character(
+              cut(
+                  x = seedl,
+                  breaks = c(Inf, seedlToDcCuts),
+                  labels = dcClasses,
+                  include.lowest = TRUE
+                  )
+              )
+          )
+      dcSeedl[dcSeedl == 0] <- NA
+      germ[[5]] <- dcSeedl  
+      mode(germ[[5]]) <- "double"
+      ## germ@proj4string <- parameter$proj4string
+      writeRAST6(
+          germ,
+          vname = dcSeedlingsLayer,
+          zcol = 5,
+          NODATA = -1
+          )
   }
-#+end_src
-** TODO seedGermBasic
-Needs to be tested!!!
-:PROPERTIES:
-:tangle:   ./R/seedGermBasic.R
-:comments: yes
-:no-expand: TRUE
-:END:
-#+begin_src R
-
 #+end_src
 
 * TODO Tests

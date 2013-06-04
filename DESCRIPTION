@@ -2,7 +2,7 @@ Package: seedGerm
 Type: Package
 Title: Spatial seed germination routines
 Version: 0.0-1
-Date: 2013-05-16_15-09
+Date: 2013-06-04_15-35
 Author: Rainer M. Krug
 Maintainer: Rainer M Krug <Rainer@krugs.de>
 Description: Routines for spatial seed germination
