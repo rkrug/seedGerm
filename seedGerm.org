@@ -1,7 +1,8 @@
+# -*- org-babel-tangled-file: t; org-babel-tangle-run-postTangleScript: t; -*-
+
 #+TITLE:     seedGerm.org
-#+AUTHOR:    Charles C. Berry    
-#+EMAIL:     cberry@tajo.ucsd.edu
-#+DATE:      2010-12-08 Thur
+#+AUTHOR:    Rainer M Krug
+#+EMAIL:     Rainer@krugs.de
 #+DESCRIPTION: R Package Development Helpers
 #+KEYWORDS: 
 
@@ -88,15 +89,15 @@ Org-babel support for building
 
 ** Post tangle script
 #+begin_src sh :results output :tangle ./postTangleScript.sh :var VER=(vc-working-revision (buffer-file-name)) :var STATE=(vc-state (or (buffer-file-name) org-current-export-file))
-  sed -i s/MAJORVERSION/$MAJORVERSION/ ./DESCRIPTION
-  sed -i s/MINORVERSION/$MINORVERSION/ ./DESCRIPTION
-  sed -i s/PATCHVERSION/$PATCHVERSION/ ./DESCRIPTION
-  sed -i s/TODAYSDATE/`date +%Y-%m-%d_%H-%M`/ ./DESCRIPTION
+  sed -i '' s/MAJORVERSION/$MAJORVERSION/ ./DESCRIPTION
+  sed -i '' s/MINORVERSION/$MINORVERSION/ ./DESCRIPTION
+  sed -i '' s/PATCHVERSION/$PATCHVERSION/ ./DESCRIPTION
+  sed -i '' s/TODAYSDATE/`date +%Y-%m-%d_%H-%M`/ ./DESCRIPTION
 
-  sed -i s/MAJORVERSION/$MAJORVERSION/ ./seedGerm-package.R
-  sed -i s/MINORVERSION/$MINORVERSION/ ./seedGerm-package.R
-  sed -i s/PATCHVERSION/$PATCHVERSION/ ./seedGerm-package.R
-  sed -i s/TODAYSDATE/`date +%Y-%m-%d_%H-%M`/ ./seedGerm-package.R
+  sed -i '' s/MAJORVERSION/$MAJORVERSION/ ./seedGerm-package.R
+  sed -i '' s/MINORVERSION/$MINORVERSION/ ./seedGerm-package.R
+  sed -i '' s/PATCHVERSION/$PATCHVERSION/ ./seedGerm-package.R
+  sed -i '' s/TODAYSDATE/`date +%Y-%m-%d_%H-%M`/ ./seedGerm-package.R
 
   Rscript -e "library(roxygen2);roxygenize('pkg', roxygen.dir='pkg', copy.package=FALSE, unlink.target=FALSE)"
   rm -f ./postTangleScript.sh
