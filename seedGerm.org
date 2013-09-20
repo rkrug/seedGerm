@@ -99,9 +99,13 @@ Org-babel support for building
   sed -i '' s/PATCHVERSION/$PATCHVERSION/ ./seedGerm-package.R
   sed -i '' s/TODAYSDATE/`date +%Y-%m-%d_%H-%M`/ ./seedGerm-package.R
 
-  Rscript -e "library(roxygen2);roxygenize('pkg', roxygen.dir='pkg', copy.package=FALSE, unlink.target=FALSE)"
+  Rscript -e "library(roxygen2);roxygenize('.', copy.package=FALSE, unlink.target=FALSE)"
   rm -f ./postTangleScript.sh
 #+end_src
+
+#+RESULTS:
+: Updating collate directive in  /Users/rainerkrug/Documents/Projects/R-Packages/seedGerm/DESCRIPTION 
+: Updating namespace directives
 
 
 * gitignore file (./.gitignore)
@@ -113,16 +117,17 @@ Org-babel support for building
 :padline: no
 :END: 
 #+begin_src gitignore
-  *#seedGerm.*
-  seedGerm.*
-  !seedGerm.org*
-  *.o
-  *.so
-  *.rds
-  .#*
-  #*
-  *#
-  *~
+,,*#seedGerm.*
+seedGerm.*
+!seedGerm.org*
+,,*.o
+,,*.so
+,,*.rds
+.#*
+#*
+,,*#
+,*~
+postTangleScript.sh
 #+end_src
 
 * Git Revision info
@@ -165,24 +170,6 @@ Complete version info
 
 
 
-* Package description
-#+begin_src R :eval nil :tangle ./seedGerm-package.R :shebang :padline no :no-expand :comments no
-  ##' Routines for spatial seedGerm for alien clearing
-  ##' 
-  ##' \tabular{ll}{
-  ##' Package: \tab seedGerm\cr
-  ##' Type: \tab Package\cr
-  ##' Version: \tab MAJORVERSION.MINORVERSION.PATCHVERSION\cr
-  ##' Date: \tab TODAYSDATE\cr
-  ##' License: \tab GPL (>= 2)\cr
-  ##' LazyLoad: \tab yes\cr
-  ##' }
-  ##'
-  ##' @docType package
-  ##' @author Rainer M Krug \email{Rainer@@krugs.de}
-  NULL
-#+end_src
-
 * Package Files
 ** DESCRIPTION
 :PROPERTIES:
@@ -192,16 +179,17 @@ Complete version info
 :comments: no
 :END:
 #+begin_src fundamental
-  Package: seedGerm
-  Type: Package
-  Title: Spatial seed germination routines
-  Version: MAJORVERSION.MINORVERSION-PATCHVERSION
-  Date: TODAYSDATE
-  Author: Rainer M. Krug
-  Maintainer: Rainer M Krug <Rainer@krugs.de>
-  Description: Routines for spatial seed germination
-  License: GPL-3
-  LazyLoad: yes
+Package: seedGerm
+Type: Package
+Title: Spatial seed germination routines
+Version: MAJORVERSION.MINORVERSION-PATCHVERSION
+Date: TODAYSDATE
+Author: Rainer M. Krug
+Maintainer: Rainer M Krug <Rainer@krugs.de>
+Description: Routines for spatial seed germination
+Depends: spgrass6
+License: GPL-3
+LazyLoad: yes
 #+end_src
 
 ** NAMESPACE
@@ -218,136 +206,189 @@ Complete version info
 
 #+results:
 
+** Package description
+:PROPERTIES:
+:tangle:   ./R/package.R
+:eval: nil
+:no-expand: TRUE
+:comments: no
+:END:
+#+begin_src R
+##' Seed germination outines
+##'
+##' This package is a collection of different seed germination routines.
+##' 
+##' \tabular{ll}{
+##' Package: \tab seeGerm\cr
+##' Type: \tab Package\cr
+##' Version: \tab MAJORVERSION.MINORVERSION.PATCHVERSION\cr
+##' Date: \tab TODAYSDATE\cr
+##' License: \tab GPL (>= 2)\cr
+##' LazyLoad: \tab yes\cr
+##' }
+##'
+##' @name seedGerm-package
+##' @docType package
+##' @author Rainer M Krug \email{Rainer@@krugs.de}
+NULL
+#+end_src
+
 
 * R directory (./R)
-** TODO seedGermBasic
+** TODO seedGermBasicGRASS
 Needs to be tested!!!
 :PROPERTIES:
-:tangle:   ./R/seedGermBasic.R
+:tangle:   ./R/seedGermBasicGRASS.R
 :comments: yes
 :no-expand: TRUE
 :END:
 #+begin_src R 
-  ##' Basic and deterministic germination based on seed bank
-  ##'
-  ##' Calculates number of seedlings and their density class based on probability that
-  ##' seeds in seed bank germinate and a function 
-  ##' @title 
-  ##' @param seedsSoilLayer name of layer contraining number of seeds in soil seed bank
-  ##' @param disturbancesLayer name of disturbance layer for species
-  ##' @param suitabilityLayer name of suitability layer for species
-  ##' @param pGermination proportion of seeds which will try to germinate, i.e. either germinate or are removed from soil seed bank in the process
-  ##' @param pGerminationDep function to determine actual probability of germination in dependanc of suitability and disturbance in cell
-  ##' @param seedlToDcCuts cuts for conversion of number of germinated seedlings to density classes (parameter$res$cellSize * species$WfWdc$seedling / 10000)
-  ##' @param dcClasses name of density classes (pecies$WfWdc$dc[length(species$WfWdc$dc):1])
-  ##' @param pGermLayer output: name of layer containing actual probabilities of germination per cell
-  ##' @param noSeedlingsLayer output: name of number of seedlings layer
-  ##' @param dcSeedlingsLayer output: name of seedlings density class (dc)
-  ##' @return 
-  ##' @author Dr Rainer M Krug
-  seedGermBasic <- function(
-      seedsSoilLayer,                       # layerName(species, type="seedsSoil", year=parameter$year)
-      disturbancesLayer,                    # layerName(species, type="disturbances", year=parameter$year)
-      suitabilityLayer,                     # suitName(species)
-      pGermination,                         # species$pGermination
-      pGerminationDep,                      # species$pGerminationDep
-  
-      seedlToDcCuts,                        # parameter$res$cellSize * species$WfWdc$seedling / 10000
-      dcClasses,                            # species$WfWdc$dc[length(species$WfWdc$dc):1]
-  
-      pGermLayer,                           # layerName(species, type="pGerm", parameter$year)
-      noSeedlingsLayer,                     # layerName(species, type="noSeedlings", parameter$year)
-      dcSeedlingsLayer                      # layerName(species, type="dcSeedlings", parameter$year) 
-      ) {
-      
-      germ <- readRAST6(
-          c(
-              sS <- seedsSoilLayer,
-              dist <- disturbancesLayer,
-              suit <- suitabilityLayer
-              ),
-          NODATA=-1
-          )
-      
-      ## calculate number of seeds which will germinate
-      seedsGerm <- germ[[sS]] * pGermination
-      
-      ## adjust soil seed bank
-      germ[[sS]] <- germ[[sS]] - seedsGerm
-      
-      ## successfull germination probability is pGerminationDep for the species
-      germ[[4]] <- pGerminationDep(germ[[suit]], germ[[dist]])
-      mode(germ[[4]]) <- "double"
-      pGerm <- germ[[4]] 
-      ## germ@proj4string <- parameter$proj4string
-      writeRAST6(
-          germ,
-          vname = pGermLayer,
-          zcol = 4,
-          NODATA = -1
-          )
-      
-      ## initialise seedl with -999
-      seedl <- rep(-999, length(seedsGerm))
-      
-      ## set seedl to NA for all cells which have pGerm <= 0 or seeds <= 0
-      seedl[pGerm <= 0] <- NA
-      seedl[seedsGerm <= 0] <- NA
-  
-      ## set seedl to NA for all cells which have is.na(pGerm) or is.na(seedsGerm)
-      seedl[is.na(seedsGerm)] <- NA
-      seedl[is.na(pGerm)] <- NA
-      
-      ## set seedl to seedsGerm for all cells which have pGerm == 1
-      rb <- (pGerm == 1)
-      rb[is.na(rb)] <- FALSE
-      seedl[rb] <- seedsGerm[rb]  
-      
-      ## identify all remaining cells (i.e. seedl == -999) cells with suitabilities 0 < suit < 1 and calculate recruits in these cells
-      rb <- (seedl == -999)
-      rb[is.na(rb)] <- FALSE
-      oldWarn <- options()$warn
-      options(warn=-1)
-      seedl[rb] <- rbinom(
-          n    = sum(rb),
-          size = seedsGerm[rb],
-          prob = pGerm[rb]
-          )
-      options(warn=oldWarn)
-      
-      seedl[seedl == 0] <- NA
-      germ[[5]] <- seedl  
-      mode(germ[[5]]) <- "double"
-      ## germ@proj4string <- parameter$proj4string
-      writeRAST6(
-          germ,
-          vname = noSeedlingsLayer,
-          zcol = 5,
-          NODATA = -1
-          )
-      
-      ## Reclassification of noSeedlings into dcSeedlings
-      dcSeedl <- as.numeric(
-          as.character(
-              cut(
-                  x = seedl,
-                  breaks = c(Inf, seedlToDcCuts),
-                  labels = dcClasses,
-                  include.lowest = TRUE
-                  )
-              )
-          )
-      dcSeedl[dcSeedl == 0] <- NA
-      germ[[5]] <- dcSeedl  
-      mode(germ[[5]]) <- "double"
-      ## germ@proj4string <- parameter$proj4string
-      writeRAST6(
-          germ,
-          vname = dcSeedlingsLayer,
-          zcol = 5,
-          NODATA = -1
-          )
-  }
+##' Basic and deterministic germination based on soil seed bank
+##'
+##' Calculates number of seedlings and their density class based on
+##' probability that seeds in seed bank germinate and a function
+##'
+##' @usage seedGermBasicGRASS(input, disturbance, suitability,
+##' pGermination, pGerminationDep, seedlToDcCuts, dcClasses, pGerm,
+##' noSeedlings, dcSeedlings, overwrite = FALSE)
+##' @name seedGermBasicGRASS
+##' @title Basic seed germination
+##' 
+##' @param input name of layer contraining number of seeds in soil
+##' seed bank
+##' @param disturbance name of disturbance layer for species
+##' @param suitability name of suitability layer for species
+##' @param pGermination proportion of seeds which will try to
+##' germinate, i.e. either germinate or are removed from soil seed
+##' bank in the process
+##' @param pGerminationDep \R function to determine actual probability
+##' of germination in dependanc of suitability and disturbance in cell
+##' 
+##' @param seedlToDcCuts cuts for conversion of number of germinated
+##' seedlings to density classes \code{(parameter$res$cellSize *
+##' species$WfWdc$seedling / 10000)}
+##' @param dcClasses name of density classes
+##' (pecies$WfWdc$dc[length(species$WfWdc$dc):1])
+##' @param pGerm name of number of seedlings layer
+##' @param noSeedlings output: name of seedlings density class
+##' @param dcSeedlings output: name of seedlings density class
+##' @param overwrite if \code{TRUE} the output file will be overwritten if it exists
+##' 
+##' @return invisible returns name of pGerm layer
+##' @author Dr Rainer M Krug <rainer@@krugs.de>
+seedGermBasicGRASS <- function(
+    input,                       # layerName(species, type="seedsSoil", year=parameter$year)
+    disturbance,                 # layerName(species, type="disturbances", year=parameter$year)
+    suitability,                 # suitName(species)
+    pGermination,                # species$pGermination
+    pGerminationDep,             # species$pGerminationDep
+    
+    seedlToDcCuts,               # parameter$res$cellSize * species$WfWdc$seedling / 10000
+    dcClasses,                   # species$WfWdc$dc[length(species$WfWdc$dc):1]
+    
+    pGerm,                       # layerName(species, type="pGerm", parameter$year)
+    noSeedlings,                 # layerName(species, type="noSeedlings", parameter$year)
+    dcSeedlings,                 # layerName(species, type="dcSeedlings", parameter$year)
+    overwrite = FALSE
+    ) {
+    if (
+        sum(
+            c(pGerm, dcSeedlings, noSeedlings) %in% execGRASS("g.mlist", type="rast", mapset=".", intern=TRUE)
+            ) > 0
+        & !overwrite
+        ) {
+        stop(paste("One of the output layers exists! Please specify 'overwrite=TRUE' or use different pGerm name!"))
+    } 
+    germ <- readRAST6(
+        c(
+            sS <- input,
+            dist <- disturbance,
+            suit <- suitability
+            ),
+        NODATA=-1
+        )
+    
+    ## calculate number of seeds which will germinate
+    seedsGerm <- germ[[sS]] * pGermination
+    
+    ## adjust soil seed bank
+    germ[[sS]] <- germ[[sS]] - seedsGerm
+    
+    ## successfull germination probability is pGerminationDep for the species
+    germ[[4]] <- pGerminationDep(germ[[suit]], germ[[dist]])
+    mode(germ[[4]]) <- "double"
+    ## germ@proj4string <- parameter$proj4string
+    writeRAST6(
+        germ,
+        vname = pGerm,
+        zcol = 4,
+        NODATA = -1
+        )
+    pGerm <- germ[[4]] 
+    
+    ## initialise seedl with -999
+    seedl <- rep(-999, length(seedsGerm))
+    
+    ## set seedl to NA for all cells which have pGerm <= 0 or seeds <= 0
+    seedl[pGerm <= 0] <- NA
+    seedl[seedsGerm <= 0] <- NA
+    
+    ## set seedl to NA for all cells which have is.na(pGerm) or is.na(seedsGerm)
+    seedl[is.na(seedsGerm)] <- NA
+    seedl[is.na(pGerm)] <- NA
+    
+    ## set seedl to seedsGerm for all cells which have pGerm == 1
+    rb <- (pGerm == 1)
+    rb[is.na(rb)] <- FALSE
+    seedl[rb] <- seedsGerm[rb]  
+    
+    ## identify all remaining cells (i.e. seedl == -999) cells with
+    ## suitabilities 0 < suit < 1 and calculate recruits in these
+    ## cells
+    rb <- (seedl == -999)
+    rb[is.na(rb)] <- FALSE
+    oldWarn <- options()$warn
+    options(warn=-1)
+    seedl[rb] <- rbinom(
+        n    = sum(rb),
+        size = seedsGerm[rb],
+        prob = pGerm[rb]
+        )
+    options(warn=oldWarn)
+    
+    seedl[seedl == 0] <- NA
+    germ[[5]] <- seedl  
+    mode(germ[[5]]) <- "double"
+    ## germ@proj4string <- parameter$proj4string
+    writeRAST6(
+        germ,
+        vname = noSeedlings,
+        zcol = 5,
+        NODATA = -1
+        )
+    
+    ## Reclassification of noSeedlings into dcSeedlings
+    dcSeedl <- as.numeric(
+        as.character(
+            cut(
+                x = seedl,
+                breaks = c(Inf, seedlToDcCuts),
+                labels = dcClasses,
+                include.lowest = TRUE
+                )
+            )
+        )
+    dcSeedl[dcSeedl == 0] <- NA
+    germ[[5]] <- dcSeedl  
+    mode(germ[[5]]) <- "double"
+    ## germ@proj4string <- parameter$proj4string
+    writeRAST6(
+        germ,
+        vname = dcSeedlings,
+        zcol = 5,
+        NODATA = -1
+        )
+}
 #+end_src
 
 * TODO Tests
@@ -360,139 +401,6 @@ Write vignette
   CWD=`pwd`
   R CMD check pkg | sed 's/^*/ */'
 #+end_src
-
-#+results:
-#+begin_example
- * using log directory ‘/home/rkrug/Documents/Projects/R-Packages/seeddisp/pkg.Rcheck’
- * using R version 2.13.2 (2011-09-30)
- * using platform: i686-pc-linux-gnu (32-bit)
- * using session charset: UTF-8
- * checking for file ‘DESCRIPTION’ ... OK
- * checking extension type ... Package
- * this is package ‘seedGerm’ version ‘0.0-13’
- * checking package namespace information ... OK
- * checking package dependencies ... OK
- * checking if this is a source package ... WARNING
-Subdirectory ‘seedGerm/src’ contains object files.
- * checking for executable files ... OK
- * checking whether package ‘seedGerm’ can be installed ... OK
- * checking installed package size ... OK
- * checking package directory ... OK
- * checking for portable file names ... OK
- * checking for sufficient/correct file permissions ... OK
- * checking DESCRIPTION meta-information ... OK
- * checking top-level files ... OK
- * checking index information ... OK
- * checking package subdirectories ... WARNING
-Subdirectory 'inst' contains no files.
- * checking R files for non-ASCII characters ... OK
- * checking R files for syntax errors ... OK
- * checking whether the package can be loaded ... OK
- * checking whether the package can be loaded with stated dependencies ... OK
- * checking whether the package can be unloaded cleanly ... OK
- * checking whether the namespace can be loaded with stated dependencies ... OK
- * checking whether the namespace can be unloaded cleanly ... OK
- * checking for unstated dependencies in R code ... OK
- * checking S3 generic/method consistency ... OK
- * checking replacement functions ... OK
- * checking foreign function calls ... OK
- * checking R code for possible problems ... OK
- * checking Rd files ... OK
- * checking Rd metadata ... OK
- * checking Rd cross-references ... OK
- * checking for missing documentation entries ... WARNING
-Undocumented code objects:
-  waterDisp
-All user-level objects in a package should have documentation entries.
-See the chapter 'Writing R documentation files' in the 'Writing R
-Extensions' manual.
- * checking for code/documentation mismatches ... WARNING
-Codoc mismatches from documentation object 'birdDispGRASS':
-birdDispGRASS
-  Code: function(input, output = "birdDispSeeds", zeroToNULL = TRUE,
-                 overwrite = FALSE)
-  Docs: function(input, output, overwrite)
-  Argument names in code not in docs:
-    zeroToNULL
-  Mismatches in argument names:
-    Position: 3 Code: zeroToNULL Docs: overwrite
-  Mismatches in argument default values:
-    Name: 'output' Code: "birdDispSeeds" Docs: 
-    Name: 'overwrite' Code: FALSE Docs: 
-
-Codoc mismatches from documentation object 'localDispGRASS':
-localDispGRASS
-  Code: function(input, output = "localDispSeeds", zeroToNULL = TRUE,
-                 overwrite = FALSE)
-  Docs: function(input, output, overwrite)
-  Argument names in code not in docs:
-    zeroToNULL
-  Mismatches in argument names:
-    Position: 3 Code: zeroToNULL Docs: overwrite
-  Mismatches in argument default values:
-    Name: 'output' Code: "localDispSeeds" Docs: 
-    Name: 'overwrite' Code: FALSE Docs: 
-
-Codoc mismatches from documentation object 'waterDispGRASS':
-waterDispGRASS
-  Code: function(input, output = "waterDispSeeds", slope = "slope",
-                 flowdir = "flowdir", depRates, overwrite = FALSE,
-                 zeroToNULL = TRUE, progress = TRUE)
-  Docs: function(input, output = "waterDispSeeds", slope = "SLOPE",
-                 flowdir = "FLOWDIR", overwrite = FALSE)
-  Argument names in code not in docs:
-    depRates zeroToNULL progress
-  Mismatches in argument names:
-    Position: 5 Code: depRates Docs: overwrite
-  Mismatches in argument default values:
-    Name: 'slope' Code: "slope" Docs: "SLOPE"
-    Name: 'flowdir' Code: "flowdir" Docs: "FLOWDIR"
-
-Codoc mismatches from documentation object 'windDisp':
-windDisp
-  Code: function(SD2D, SEEDS, MASK, zeroToNULL)
-  Docs: function(SD2D, SEEDS, MASK)
-  Argument names in code not in docs:
-    zeroToNULL
-
-Codoc mismatches from documentation object 'windDispGRASS':
-windDisp
-  Code: function(SD2D, SEEDS, MASK, zeroToNULL)
-  Docs: function(SD2D, input, output = "windDispSeeds", overwrite =
-                 FALSE)
-  Argument names in code not in docs:
-    SEEDS MASK zeroToNULL
-  Argument names in docs not in code:
-    input output overwrite
-  Mismatches in argument names:
-    Position: 2 Code: SEEDS Docs: input
-    Position: 3 Code: MASK Docs: output
-    Position: 4 Code: zeroToNULL Docs: overwrite
-
- * checking Rd \usage sections ... WARNING
-Documented arguments not in \usage in documentation object 'waterDispGRASS':
-  depRates
-
-Objects in \usage without \alias in documentation object 'windDispGRASS':
-  windDisp
-
-Functions with \usage entries need to have the appropriate \alias
-entries, and all their arguments documented.
-The \usage entries must correspond to syntactically valid R code.
-See the chapter 'Writing R documentation files' in the 'Writing R
-Extensions' manual.
- * checking Rd contents ... OK
- * checking for unstated dependencies in examples ... OK
- * checking line endings in C/C++/Fortran sources/headers ... OK
- * checking line endings in Makefiles ... OK
- * checking for portable compilation flags in Makevars ... OK
- * checking for portable use of $(BLAS_LIBS) and $(LAPACK_LIBS) ... OK
- * checking examples ... NONE
- * checking PDF version of manual ... OK
-WARNING: There were 5 warnings, see
-  ‘/home/rkrug/Documents/Projects/R-Packages/seeddisp/pkg.Rcheck/00check.log’
-for details
-#+end_example
 
 
 

@@ -2,9 +2,14 @@ Package: seedGerm
 Type: Package
 Title: Spatial seed germination routines
 Version: 0.0-1
-Date: 2013-06-04_15-35
+Date: 2013-09-20_16-07
 Author: Rainer M. Krug
 Maintainer: Rainer M Krug <Rainer@krugs.de>
 Description: Routines for spatial seed germination
+Depends:
+    spgrass6
 License: GPL-3
 LazyLoad: yes
+Collate:
+    'package.R'
+    'seedGermBasicGRASS.R'

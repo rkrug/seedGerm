@@ -1,7 +1,13 @@
-.git
-^.*\\.org$
-^seedGerm.
-.gitignore
-library
-version
-postTangleScript.sh
+  .git
+  ^.*\\.org$
+  ^seedGerm.
+  .gitignore
+  library
+  version
+  postTangleScript.sh
+
+;; Local Variables:
+;; org-babel-tangled-file: t
+;; buffer-read-only: t
+;; eval:: (auto-revert-mode)
+;; End:
