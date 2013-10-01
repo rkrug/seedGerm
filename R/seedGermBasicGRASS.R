@@ -32,6 +32,7 @@
 ##' 
 ##' @return invisible returns name of pGerm layer
 ##' @author Dr Rainer M Krug <rainer@@krugs.de>
+##' @export
 seedGermBasicGRASS <- function(
     input,                       # layerName(species, type="seedsSoil", year=parameter$year)
     disturbance,                 # layerName(species, type="disturbances", year=parameter$year)
